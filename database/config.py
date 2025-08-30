@@ -1,11 +1,25 @@
 
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+import os
+from dotenv import load_dotenv
 
-uri = "mongodb+srv://johnwillymarandu:<db_password>@cluster0.gxnlg2a.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+
+load_dotenv()
+
+uri = os.getenv("DATABASE_URL")
 
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi('1'))
+
+#creating the db
+db =client['pmng']
+
+#creating collections
+project_collection = db['project']
+skills_collection = db['skills']
+user_collection = db['skills']
+contacts_collection = db['contacts']
 
 # Send a ping to confirm a successful connection
 try:
