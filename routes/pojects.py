@@ -26,3 +26,4 @@ async def get_projects():
             details= "no project found"
         )
     return project_list
+
