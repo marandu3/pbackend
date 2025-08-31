@@ -1,11 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from routes.pojects import router as projectrouter
+from routes.projects import router as projectrouter
 
 app = FastAPI()
-
-app.include_router(projectrouter,tags=["project"])
 
 # Allow requests from any origin
 app.add_middleware(
@@ -17,7 +15,7 @@ app.add_middleware(
 )
 
 # Include routers
-
+app.include_router(projectrouter,tags=["project"])
 
 # Test endpoint
 @app.get("/")
