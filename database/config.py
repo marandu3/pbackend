@@ -16,11 +16,11 @@ client = MongoClient(uri, server_api=ServerApi('1'))
 db =client['pmng']
 
 #creating collections
-project_collection = db['project']
+profile_collection = db['profile']
+education_collection = db['education']
 skills_collection = db['skills']
-user_collection = db['user']
-contacts_collection = db['contacts']
-
+timeline_collection = db['timeline']
+project_collection = db['project']
 # Send a ping to confirm a successful connection
 try:
     client.admin.command('ping')
