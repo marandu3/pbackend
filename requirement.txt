@@ -4,9 +4,9 @@ certifi==2025.8.3
 cffi==1.17.1
 click==8.2.1
 cryptography==45.0.6
-dnspython==1.16.0
+dnspython
 dotenv==0.9.9
-email-validator==2.3.0
+email-validator
 fastapi==0.116.1
 fastapi-cli==0.0.8
 fastapi-cloud-cli==0.1.5
