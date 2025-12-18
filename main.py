@@ -7,6 +7,7 @@ from routes.education import router as education_router
 from routes.skill import router as skill_router
 from routes.timeline import router as timeline_router
 from routes.project import router as project_router
+from routes.user import router as user_router
 
 app = FastAPI()
 
@@ -25,6 +26,7 @@ app.include_router(education_router, tags=["education"])
 app.include_router(skill_router, tags=["skills"])
 app.include_router(timeline_router, tags=["timeline"])
 app.include_router(project_router, tags=["projects"])
+app.include_router(user_router, tags=["user"])
 
 # Test endpoint
 @app.get("/")

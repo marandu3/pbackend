@@ -21,6 +21,7 @@ education_collection = db['education']
 skills_collection = db['skills']
 timeline_collection = db['timeline']
 project_collection = db['project']
+user_collection = db['user']
 # Send a ping to confirm a successful connection
 try:
     client.admin.command('ping')
