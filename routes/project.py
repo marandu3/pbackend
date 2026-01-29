@@ -22,7 +22,7 @@ def get_projects():
 @router.put("/projects/{name}", response_model=Project)
 def update_project(name: str, project: Project):
     result = project_collection.update_one(
-        {"name": name},
+        {"title": name},
         {"$set": project.model_dump()}
     )
     if result.modified_count == 1:
@@ -32,7 +32,7 @@ def update_project(name: str, project: Project):
     
 @router.delete("/projects/{name}")
 def delete_project(name: str):
-    result = project_collection.delete_one({"name": name})
+    result = project_collection.delete_one({"title": name})
     if result.deleted_count == 1:
         return {"detail": "Project entry deleted successfully."}
     else:
