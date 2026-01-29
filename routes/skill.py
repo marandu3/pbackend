@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from model.skill import skill
+from routes.user import get_current_user
 from database.config import skills_collection
 from typing import List
 
 router = APIRouter()
 
-@router.post("/skills/", response_model=skill)
+@router.post("/skills/", response_model=skill, dependencies=[Depends(get_current_user)])
 def create_skill(skill: skill):
     skill_dict = skill.model_dump()
     result = skills_collection.insert_one(skill_dict)
@@ -19,7 +20,7 @@ def get_skills():
     skills = list(skills_collection.find({}, {"_id": 0}))
     return [skill(**sk) for sk in skills]
 
-@router.put("/skills/{name}", response_model=skill)
+@router.put("/skills/{name}", response_model=skill, dependencies=[Depends(get_current_user)])
 def update_skill(name: str, skill: skill):
     result = skills_collection.update_one(
         {"name": name},
@@ -29,8 +30,8 @@ def update_skill(name: str, skill: skill):
         return skill
     else:
         raise HTTPException(status_code=404, detail="Skill entry not found or no changes made.")
-    
-@router.delete("/skills/{name}")
+
+@router.delete("/skills/{name}", dependencies=[Depends(get_current_user)])
 def delete_skill(name: str):
     result = skills_collection.delete_one({"name": name})
     if result.deleted_count == 1:

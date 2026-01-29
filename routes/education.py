@@ -1,11 +1,12 @@
 from model.education import Education
 from database.config import education_collection
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
+from routes.user import get_current_user
 
 router = APIRouter()
 
-@router.post("/education/", response_model=Education)
+@router.post("/education/", response_model=Education, dependencies=[Depends(get_current_user)])
 def create_education(education: Education):
     education_dict = education.model_dump()
     result = education_collection.insert_one(education_dict)
@@ -20,7 +21,7 @@ def get_educations():
     return [Education(**edu) for edu in educations]
 
 #updating education entry by level
-@router.put("/education/{level}", response_model=Education)
+@router.put("/education/{level}", response_model=Education, dependencies=[Depends(get_current_user)])
 def update_education(level: str, education: Education):
     result = education_collection.update_one(
         {"level": level},
@@ -30,8 +31,8 @@ def update_education(level: str, education: Education):
         return education
     else:
         raise HTTPException(status_code=404, detail="Education entry not found or no changes made.")
-    
-@router.delete("/education/{level}")
+
+@router.delete("/education/{level}", dependencies=[Depends(get_current_user)])
 def delete_education(level: str):
     result = education_collection.delete_one({"level": level})
     if result.deleted_count == 1:

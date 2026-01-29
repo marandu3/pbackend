@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from model.project import projectModel as Project
 from database.config import project_collection
+from routes.user import get_current_user
 from typing import List
 
 router = APIRouter()
 
-@router.post("/projects/", response_model=Project)
+@router.post("/projects/", response_model=Project, dependencies=[Depends(get_current_user)])
 def create_project(project: Project):
     project_dict = project.model_dump()
     result = project_collection.insert_one(project_dict)
@@ -19,7 +20,7 @@ def get_projects():
     projects = list(project_collection.find({}, {"_id": 0}))
     return [Project(**proj) for proj in projects]
 
-@router.put("/projects/{name}", response_model=Project)
+@router.put("/projects/{name}", response_model=Project, dependencies=[Depends(get_current_user)])
 def update_project(name: str, project: Project):
     result = project_collection.update_one(
         {"title": name},
@@ -29,8 +30,8 @@ def update_project(name: str, project: Project):
         return project
     else:
         raise HTTPException(status_code=404, detail="Project entry not found or no changes made.")
-    
-@router.delete("/projects/{name}")
+
+@router.delete("/projects/{name}", dependencies=[Depends(get_current_user)])
 def delete_project(name: str):
     result = project_collection.delete_one({"title": name})
     if result.deleted_count == 1:

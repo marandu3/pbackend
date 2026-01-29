@@ -1,13 +1,14 @@
 from model.profile import profileBase, ProfileCreate
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
+from routes.user import get_current_user
 from database.config import profile_collection
 
 
 router = APIRouter()
 
 # 🟢 Create
-@router.post("/profile", response_model=profileBase, status_code=status.HTTP_201_CREATED)
+@router.post("/profile", response_model=profileBase, status_code=status.HTTP_201_CREATED, dependencies=[Depends(get_current_user)])
 def create_or_update_profile(profile: ProfileCreate):
     profile = profile.model_dump()
     profile_collection.delete_many({})  # Ensure only one profile exists
