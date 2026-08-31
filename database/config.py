@@ -8,9 +8,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 uri = os.getenv("DATABASE_URL")
+if not uri:
+    raise ValueError(
+        "DATABASE_URL environment variable is not set. "
+        "Add it to pbackend/.env (see .env.example)."
+    )
 
 # Create a new client and connect to the server
-client = MongoClient(uri, server_api=ServerApi('1'))
+client = MongoClient(uri, server_api=ServerApi('1'), serverSelectionTimeoutMS=5000)
 
 #creating the db
 db =client['pmng']
