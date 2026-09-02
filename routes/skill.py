@@ -12,16 +12,17 @@ router = APIRouter()
     response_model=SkillOut,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(get_current_user)],
+    summary="Add a skill",
 )
 def create_skill(skill_in: skill):
     result = skills_collection.insert_one(skill_in.model_dump())
     return SkillOut(id=str(result.inserted_id), **skill_in.model_dump())
 
-@router.get("/skills/", response_model=List[SkillOut])
+@router.get("/skills/", response_model=List[SkillOut], summary="List all skills")
 def get_skills():
     return [serialize_doc(sk) for sk in skills_collection.find({})]
 
-@router.put("/skills/{skill_id}", response_model=SkillOut, dependencies=[Depends(get_current_user)])
+@router.put("/skills/{skill_id}", response_model=SkillOut, dependencies=[Depends(get_current_user)], summary="Update a skill by id")
 def update_skill(skill_id: str, skill_in: skill):
     oid = parse_object_id(skill_id)
     result = skills_collection.update_one({"_id": oid}, {"$set": skill_in.model_dump()})
@@ -29,7 +30,7 @@ def update_skill(skill_id: str, skill_in: skill):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Skill entry not found.")
     return SkillOut(id=skill_id, **skill_in.model_dump())
 
-@router.delete("/skills/{skill_id}", dependencies=[Depends(get_current_user)])
+@router.delete("/skills/{skill_id}", dependencies=[Depends(get_current_user)], summary="Delete a skill by id")
 def delete_skill(skill_id: str):
     oid = parse_object_id(skill_id)
     result = skills_collection.delete_one({"_id": oid})

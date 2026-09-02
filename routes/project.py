@@ -26,6 +26,8 @@ def _generate_unique_slug(title: str, exclude_id: Optional[str] = None) -> str:
     response_model=ProjectOut,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(get_current_user)],
+    summary="Add a project",
+    description="A URL slug is generated from the title automatically and stays stable across later edits.",
 )
 def create_project(project: Project):
     slug = _generate_unique_slug(project.title)
@@ -33,7 +35,7 @@ def create_project(project: Project):
     result = project_collection.insert_one(doc)
     return ProjectOut(id=str(result.inserted_id), **doc)
 
-@router.get("/projects/", response_model=List[ProjectOut])
+@router.get("/projects/", response_model=List[ProjectOut], summary="List all projects")
 def get_projects():
     return [serialize_doc(proj) for proj in project_collection.find({})]
 
@@ -44,7 +46,13 @@ def get_project_by_slug(slug: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found.")
     return serialize_doc(doc)
 
-@router.put("/projects/{project_id}", response_model=ProjectOut, dependencies=[Depends(get_current_user)])
+@router.put(
+    "/projects/{project_id}",
+    response_model=ProjectOut,
+    dependencies=[Depends(get_current_user)],
+    summary="Update a project by id",
+    description="The slug is never changed by this endpoint, even if the title changes, so existing links keep working.",
+)
 def update_project(project_id: str, project: Project):
     oid = parse_object_id(project_id)
     existing = project_collection.find_one({"_id": oid})
@@ -59,7 +67,7 @@ def update_project(project_id: str, project: Project):
     project_collection.update_one({"_id": oid}, {"$set": doc})
     return ProjectOut(id=project_id, **doc)
 
-@router.delete("/projects/{project_id}", dependencies=[Depends(get_current_user)])
+@router.delete("/projects/{project_id}", dependencies=[Depends(get_current_user)], summary="Delete a project by id")
 def delete_project(project_id: str):
     oid = parse_object_id(project_id)
     result = project_collection.delete_one({"_id": oid})

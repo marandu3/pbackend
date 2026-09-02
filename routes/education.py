@@ -12,12 +12,13 @@ router = APIRouter()
     response_model=EducationOut,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(get_current_user)],
+    summary="Add an education record",
 )
 def create_education(education: Education):
     result = education_collection.insert_one(education.model_dump())
     return EducationOut(id=str(result.inserted_id), **education.model_dump())
 
-@router.get("/education/", response_model=List[EducationOut])
+@router.get("/education/", response_model=List[EducationOut], summary="List all education records")
 def get_educations():
     return [serialize_doc(edu) for edu in education_collection.find({})]
 
@@ -25,6 +26,7 @@ def get_educations():
     "/education/{education_id}",
     response_model=EducationOut,
     dependencies=[Depends(get_current_user)],
+    summary="Update an education record by id",
 )
 def update_education(education_id: str, education: Education):
     oid = parse_object_id(education_id)
@@ -33,7 +35,7 @@ def update_education(education_id: str, education: Education):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Education entry not found.")
     return EducationOut(id=education_id, **education.model_dump())
 
-@router.delete("/education/{education_id}", dependencies=[Depends(get_current_user)])
+@router.delete("/education/{education_id}", dependencies=[Depends(get_current_user)], summary="Delete an education record by id")
 def delete_education(education_id: str):
     oid = parse_object_id(education_id)
     result = education_collection.delete_one({"_id": oid})
