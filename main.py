@@ -13,9 +13,9 @@ from routes.profile import router as profile_router, migrate_legacy_profile
 from routes.education import router as education_router
 from routes.skill import router as skill_router
 from routes.timeline import router as timeline_router
-from routes.project import router as project_router
+from routes.project import router as project_router, migrate_project_slugs
 from routes.user import router as user_router
-from database.config import client, user_collection
+from database.config import client, user_collection, project_collection
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger("portfolio")
@@ -37,6 +37,8 @@ async def lifespan(app: FastAPI):
     try:
         user_collection.create_index("username", unique=True)
         migrate_legacy_profile()
+        migrate_project_slugs()
+        project_collection.create_index("slug", unique=True)
     except Exception:
         logger.exception("Startup maintenance (indexes/migration) failed.")
 

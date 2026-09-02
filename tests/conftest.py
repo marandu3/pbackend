@@ -26,6 +26,7 @@ def clean_database():
     and would otherwise leak between tests since they all share one client)."""
     main.client.drop_database(main.settings.database_name)
     main.user_collection.create_index("username", unique=True)
+    main.project_collection.create_index("slug", unique=True)
     main.limiter.reset()
     yield
 

@@ -10,6 +10,9 @@ class projectModel(BaseModel):
     start_date: Optional[str] = Field(None, description="Start date of the project in YYYY-MM-DD format")
     end_date: Optional[str] = Field(None, description="End date of the project in YYYY-MM-DD format, if applicable")
     technologies: Optional[list[str]] = Field(None, description="List of technologies used in the project")
+    featured: bool = Field(False, description="Whether this project is highlighted on the homepage")
+    order: int = Field(0, description="Lower numbers are shown first among featured projects")
 
 class ProjectOut(projectModel):
     id: str = Field(..., description="Database id of this record")
+    slug: str = Field(..., description="Stable URL slug, set at creation and unaffected by later title edits")
