@@ -1,0 +1,5 @@
+# Test-only dependencies. Install alongside requirement.txt to run the test suite:
+#   pip install -r requirement.txt -r requirement-dev.txt
+#   pytest
+pytest==9.1.1
+mongomock==4.3.0
