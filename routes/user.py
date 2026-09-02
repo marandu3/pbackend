@@ -1,22 +1,19 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+import logging
+
+from fastapi import APIRouter, HTTPException, Depends, Request, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pwdlib import PasswordHash
-from dotenv import load_dotenv
 from typing import Optional
-import os
 
+from core.config import get_settings
+from core.limiter import limiter
 from database.config import user_collection
 from model.user import User, UserCreate, UserInDB
 
-load_dotenv()
-
-SECRET_KEY = os.getenv("SECRETE_KEY")
-if not SECRET_KEY:
-    raise ValueError("SECRET_KEY environment variable is not set")
-ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+settings = get_settings()
+logger = logging.getLogger("portfolio.auth")
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -42,12 +39,14 @@ def authenticate_user(username: str, password: str):
     return user
 
 def create_access_token(subject: str, expires_delta: Optional[timedelta] = None):
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    now = datetime.now(timezone.utc)
+    expire = now + (expires_delta or timedelta(minutes=15))
     payload = {
         "sub": subject,
-        "exp": expire
+        "iat": now,
+        "exp": expire,
     }
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
 
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserInDB:
     credentials_exception = HTTPException(
@@ -57,7 +56,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserInDB:
     )
 
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         username: str | None = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -68,28 +67,59 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserInDB:
     if not user:
         raise credentials_exception
 
-    return UserInDB(**user)
+    user_in_db = UserInDB(**user)
+    if user_in_db.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions",
+        )
+
+    return user_in_db
 
 # -------------------- ROUTES --------------------
 
-@router.post("/register", response_model=User)
-async def register(user: UserCreate):
-    if user_collection.find_one({"username": user.username}):
-        raise HTTPException(status_code=400, detail="Username already exists")
+@router.post(
+    "/register",
+    response_model=User,
+    summary="Create the site owner's admin account (bootstrap only)",
+    description=(
+        "Only works while no user account exists yet. Once the first admin "
+        "account has been created, this endpoint always returns 403 — there "
+        "is no open/public registration."
+    ),
+)
+@limiter.limit("5/minute")
+async def register(request: Request, user: UserCreate):
+    if user_collection.count_documents({}) > 0:
+        logger.warning("Blocked registration attempt: an admin account already exists.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Registration is closed. An admin account already exists.",
+        )
+
+    if len(user.password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Password must be at least 8 characters long.",
+        )
 
     user_dict = {
         "username": user.username,
         "hashed_password": hash_password(user.password),
+        "role": "admin",
     }
 
     user_collection.insert_one(user_dict)
-    return User(username=user.username)
+    logger.info("Bootstrap admin account created for username=%s", user.username)
+    return User(username=user.username, role="admin")
 
 
-@router.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+@router.post("/login", summary="Log in and receive a bearer token")
+@limiter.limit("10/minute")
+async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(form_data.username, form_data.password)
     if not user:
+        logger.warning("Failed login attempt for username=%s", form_data.username)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
@@ -98,7 +128,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
     access_token = create_access_token(
         subject=user["username"],
-        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
     )
 
     return {
@@ -107,6 +137,6 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     }
 
 
-@router.get("/me", response_model=User)
+@router.get("/me", response_model=User, summary="Return the currently authenticated user")
 async def read_current_user(current_user: UserInDB = Depends(get_current_user)):
-    return User(username=current_user.username)
+    return User(username=current_user.username, role=current_user.role)

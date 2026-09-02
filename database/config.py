@@ -1,35 +1,23 @@
-
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-import os
-from dotenv import load_dotenv
 
+from core.config import get_settings
 
-load_dotenv()
-
-uri = os.getenv("DATABASE_URL")
-if not uri:
-    raise ValueError(
-        "DATABASE_URL environment variable is not set. "
-        "Add it to pbackend/.env (see .env.example)."
-    )
+settings = get_settings()
 
 # Create a new client and connect to the server
-client = MongoClient(uri, server_api=ServerApi('1'), serverSelectionTimeoutMS=5000)
+client = MongoClient(
+    settings.database_url,
+    server_api=ServerApi("1"),
+    serverSelectionTimeoutMS=5000,
+)
 
-#creating the db
-db =client['pmng']
+db = client[settings.database_name]
 
-#creating collections
-profile_collection = db['profile']
-education_collection = db['education']
-skills_collection = db['skills']
-timeline_collection = db['timeline']
-project_collection = db['project']
-user_collection = db['user']
-# Send a ping to confirm a successful connection
-try:
-    client.admin.command('ping')
-    print("Pinged your deployment. You successfully connected to MongoDB!")
-except Exception as e:
-    print(e)
+# creating collections
+profile_collection = db["profile"]
+education_collection = db["education"]
+skills_collection = db["skills"]
+timeline_collection = db["timeline"]
+project_collection = db["project"]
+user_collection = db["user"]

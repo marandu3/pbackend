@@ -3,6 +3,7 @@ from typing import Optional
 
 class User(BaseModel):
     username: str
+    role: str = "admin"
 
 class UserInDB(User):
     hashed_password: str
