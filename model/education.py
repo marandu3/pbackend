@@ -8,3 +8,6 @@ class Education(BaseModel):
     location: str = Field(..., description="Location of the institution")
     start_year: int = Field(..., description="Year when the education started")
     end_year: Optional[int] = Field(None, description="Year when the education ended, if applicable")
+
+class EducationOut(Education):
+    id: str = Field(..., description="Database id of this record")

@@ -6,3 +6,6 @@ class skill(BaseModel):
     icon_url: Optional[str] = Field(None, description="URL to an icon representing the skill")
     description: Optional[str] = Field(None, description="Brief description of the skill")
     category: Optional[str] = Field(None, description="Category of the skill, e.g., Programming, Management")
+
+class SkillOut(skill):
+    id: str = Field(..., description="Database id of this record")

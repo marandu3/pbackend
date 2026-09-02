@@ -7,3 +7,6 @@ class timeline(BaseModel):
     start_date: str = Field(..., description="Start date of the event in YYYY-MM-DD format")
     end_date: Optional[str] = Field(None, description="End date of the event in YYYY-MM-DD format, if applicable")
     location: Optional[str] = Field(None, description="Location where the event took place")
+
+class TimelineOut(timeline):
+    id: str = Field(..., description="Database id of this record")
